@@ -31,6 +31,8 @@ public class SendFaultTask {
     @Value("${sysconfig.relayId}")
     private List<String> relayId;
 
+
+
     /**
      * 串口和继电器5秒检测一次
      */
@@ -47,7 +49,7 @@ public class SendFaultTask {
                     break;
                 }
             }
-            gpioService.setGpio(1, serialPortFault);
+            gpioService.setGpio(3, serialPortFault);
         }
 
         // 继电器
@@ -59,7 +61,7 @@ public class SendFaultTask {
                     break;
                 }
             }
-            gpioService.setGpio(3, relayFault);
+            gpioService.setGpio(5, relayFault);
         }
 
         // 运行检测
@@ -68,7 +70,7 @@ public class SendFaultTask {
         } else if (runFlag == 1) {
             runFlag = 0;
         }
-        gpioService.setGpio(5, runFlag);
+        gpioService.setGpio(1, runFlag);
     }
 
 
