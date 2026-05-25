@@ -31,8 +31,6 @@ public class SendFaultTask {
     @Value("${sysconfig.relayId}")
     private List<String> relayId;
 
-
-
     /**
      * 串口和继电器5秒检测一次
      */
@@ -43,7 +41,7 @@ public class SendFaultTask {
         // 串口故障
         if (serialPortId != null && !serialPortId.isEmpty()) {
             for (String channelId : serialPortId) {
-                String alarm = redisUtil.getMap("alarm", channelId) + "";
+                String alarm = redisUtil.getMap("channelAlarm", channelId) + "";
                 if (!alarm.equals("null")) {
                     serialPortFault = 1;
                     break;
@@ -55,7 +53,7 @@ public class SendFaultTask {
         // 继电器
         if (relayId != null && !relayId.isEmpty()) {
             for (String channelId : relayId) {
-                String alarm = redisUtil.getMap("alarm", channelId) + "";
+                String alarm = redisUtil.getMap("channelAlarm", channelId) + "";
                 if (!alarm.equals("null")) {
                     relayFault = 1;
                     break;
