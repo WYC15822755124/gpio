@@ -11,6 +11,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @EnableScheduling
@@ -25,41 +27,42 @@ public class SendFaultTask {
     @Autowired
     RedisUtil redisUtil;
 
-    @Value("${sysconfig.serialPortId}")
-    private List<String> serialPortId;
+    @Value("${sysconfig.serialPortName}")
+    private List<String> serialPortName;
 
-    @Value("${sysconfig.relayId}")
-    private List<String> relayId;
+    @Value("${sysconfig.relayName}")
+    private List<String> relayName;
 
     /**
      * 串口和继电器5秒检测一次
      */
     @Scheduled(fixedDelay = 5000)
     public void conditionMonitoring() {
-        int serialPortFault = 0;
-        int relayFault = 0;
-        // 串口故障
-        if (serialPortId != null && !serialPortId.isEmpty()) {
-            for (String channelId : serialPortId) {
-                String alarm = redisUtil.getMap("channelAlarm", channelId) + "";
-                if (!alarm.equals("null")) {
-                    serialPortFault = 1;
-                    break;
+        AtomicInteger serialPortFault = new AtomicInteger();
+        AtomicInteger relayFault = new AtomicInteger();
+
+        Map<Object, Object> channelAlarm = redisUtil.getHashEntries("channelAlarm");
+
+        if (channelAlarm != null && !channelAlarm.keySet().isEmpty()) {
+            channelAlarm.forEach((key, value) -> {
+                if (serialPortName.contains(value + "")) {
+                    serialPortFault.getAndIncrement();
+                } else if (relayName.contains(value + "")) {
+                    relayFault.getAndIncrement();
                 }
-            }
-            gpioService.setGpio(3, serialPortFault);
+            });
         }
 
-        // 继电器
-        if (relayId != null && !relayId.isEmpty()) {
-            for (String channelId : relayId) {
-                String alarm = redisUtil.getMap("channelAlarm", channelId) + "";
-                if (!alarm.equals("null")) {
-                    relayFault = 1;
-                    break;
-                }
-            }
-            gpioService.setGpio(5, relayFault);
+        if (serialPortFault.get() > 0) {
+            gpioService.setGpio(3, 1);
+        } else {
+            gpioService.setGpio(3, 0);
+        }
+
+        if (relayFault.get() > 0) {
+            gpioService.setGpio(5, 1);
+        } else {
+            gpioService.setGpio(5, 0);
         }
 
         // 运行检测
